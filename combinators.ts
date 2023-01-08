@@ -85,7 +85,6 @@ class Pair<R1, R2> extends Parser<[R1, R2]> {
       error: global_error,
       remainder: input,
     };
-
     /*
     Proof of concept that monads (FlatMap) is the most fundamental parser
     combinator with map and pred (functor and filter) to create parser
@@ -293,6 +292,39 @@ class Either extends Parser<unknown> {
   }
 }
 
+class FixedEither<T> extends Parser<T> {
+  parsers: Array<Parser<T>>;
+
+  parse(input: string): ParseResult<T> {
+    for (const parser of this.parsers) {
+      const {
+        state,
+        remainder,
+        value,
+      } = parser.parse(input);
+
+      if (state == Result.Ok && value !== undefined) {
+        return {
+          state,
+          remainder,
+          value,
+        };
+      }
+    }
+
+    return {
+      state: Result.Error,
+      remainder: input,
+      error: "No parser on the either succeed",
+    };
+  }
+
+  constructor(...parsers: Array<Parser<T>>) {
+    super();
+    this.parsers = parsers;
+  }
+}
+
 class FlatMap<A, B> extends Parser<B> {
   parser: Parser<A>;
   monad_fn: (val: A) => Parser<B>;
@@ -380,6 +412,7 @@ class Sequence extends Parser<null> {
 }
 
 export {
+  FixedEither,
   Either,
   FlatMap,
   Inspect,

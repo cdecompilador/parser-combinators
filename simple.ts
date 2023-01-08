@@ -46,8 +46,11 @@ class Item extends Parser<string> {
 }
 
 function isAlphabetic(ch: string): boolean {
+  if (ch === undefined) {
+    return false;
+  }
   const n = ch.codePointAt(0);
-  if (n == undefined) {
+  if (n === undefined) {
     return false;
   }
   return n >= 65 && n < 91 || n >= 97 && n < 123;
