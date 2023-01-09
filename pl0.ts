@@ -217,18 +217,54 @@ class ConditionParser extends Parser<Condition> {
   }
 }
 
-class StmtParser extends Parser<Stmt> {
-  parse(input: string): ParseResult<Stmt> {
+class VarAssignStmtParser extends Parser<VarAssignStmt> {
+  parse(input: string): ParseResult<VarAssignStmt> {
     return new Pair(
-      new Identifier(),
+      new SpaceSurrounded(new Identifier()),
       new Right(
-        new SpaceSurrounded(new Match(":=")),
+        new Match(":="),
         new ExprParser()
       )
     )
     .map(([id, expr]) => {
       return new VarAssignStmt(id, expr)
     })
+    .parse(input)
+  }
+}
+
+class CallStmtParser extends Parser<CallStmt> {
+  parse(input: string): ParseResult<CallStmt> {
+    return new Right(
+      new SpaceSurrounded(new Match("call")),
+      new Identifier()
+    )
+    .map((id) => new CallStmt(id))
+    .parse(input)
+  }
+}
+
+class WriteStmtParser extends Parser<WriteStmt> {
+  parse(input: string): ParseResult<WriteStmt> {
+    return new Right(
+      new Pair(
+        new Match("!"),
+        WhiteSpaces
+      ),
+      new ExprParser()
+    )
+    .map((expr) => new WriteStmt(expr))
+    .parse(input)
+  }  
+}
+
+class StmtParser extends Parser<Stmt> {
+  parse(input: string): ParseResult<Stmt> {
+    return new FixedEither(
+      new VarAssignStmtParser(),
+      new CallStmtParser(),
+      new WriteStmtParser()
+    )
     .parse(input)
   }
 }
@@ -316,4 +352,22 @@ class VarAssignStmt extends Stmt {
     this.id = id
     this.value = value
   }  
+}
+
+class CallStmt extends Stmt {
+  id: string
+  
+  constructor(id: string) {
+    super()
+    this.id = id
+  }
+}
+
+class WriteStmt extends Stmt {
+  expr: Expr
+  
+  constructor(expr: Expr) {
+    super()
+    this.expr = expr
+  }
 }
